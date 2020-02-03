@@ -1,0 +1,209 @@
+.container {
+    max-width: 100%;
+    padding: 0px;
+}
+.body{
+    
+    background-color:#fcf9f9;
+    background-size:16px 16px;
+}
+.contact-details{
+    border-radius: 10px;
+    border: 2px solid rgb(10, 10, 10);
+    background: transparent;
+    color: rgb(58, 56, 56);
+    /* background: aqua; */
+    height: 190;
+    margin-top: 12px;
+    padding: 32px;
+}
+.footer{
+    padding-top: 8px;
+    margin-top: 16px;
+    border-top: 4px dashed rgb(44, 43, 42);
+}
+.form-body {
+    border: 20px solid rgb(234, 0, 0);
+    margin-left: 18%;
+    margin-right: 18%;
+    margin-bottom: 20px;
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-bottom: 20px;
+    padding-top: 5px;
+    position: relative;
+    
+    background-color: rgb(232, 222, 212);
+}
+.form-group-style{
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+.form-heading{
+    text-align: center;
+    position: relative;
+    font-size: 33px;
+    line-height: 36px;
+    font-weight: 700;
+    font-family: cursive;
+    font-variant: all-petite-caps;
+    color: rgb(255, 255, 255);
+}
+.header {
+    /* background-color: rgb(255, 255, 255); */
+    width: 100%;
+    height: 110px;
+    background-image: linear-gradient(to bottom right, rgb(255, 0, 0), yellow);
+
+}
+.headerTitle {
+    color: #000000;
+    position: absolute;
+    font-size: 44px;
+    font-weight: 700;
+    padding: 0px 30px;
+    line-height: 101px;
+    font-family: initial;
+}
+
+.headerImage {
+    position: relative;
+    display: inline-block;
+    height: 100%;
+    width: 11%;
+    margin: 0px 10px;
+}
+img{
+    height: 524px;
+}
+.image-slide{
+    border-radius: 10px;
+    border: 3px solid white;
+    padding-left: 0px;
+    overflow: hidden;
+    padding-right: 0px;
+    margin-right: 5px;
+}
+input::placeholder { /* Chrome/Opera/Safari */
+    font-style: italic;
+}
+.invalidError{
+    color: red;
+}
+.italic-style {
+    font-style: italic;
+}
+.labelDsip {
+    font-weight: bold;
+    color: rgb(0, 0, 0);
+}
+.labels{
+    border-right: 1px solid grey;
+    margin-right: 10px;
+}
+.leftpanel{
+    height: 40%;
+}
+.login{
+    padding: 12px;
+    color: #0e0e0e;
+    border-radius: 14px;
+    border: 2px solid #101010;
+    background: white;
+}
+.login-header{
+    text-align: center;
+    padding-top: 18px;
+}
+.login-body {
+    padding-bottom: 20px;
+}
+.mand-info {
+    color: red;
+    margin-top: 36px;
+}
+.personalDate{
+    color: rgb(41, 38, 38);
+    padding: 20px;
+    font-size: large;
+    font-weight: bolder;
+    
+}
+.profile{ 
+    background-size: 2em 2em;
+    border-radius: 10px;
+    border: 1px solid rgb(51, 53, 51);
+    padding: 5px;
+    background-color: rgb(255, 255, 255);
+}
+.profile-btn{
+    margin-bottom: 5px;
+    text-align: center;
+}
+.register-web-background{
+    padding-top: 40px;
+}
+.registraiton-info {
+    margin-top: 36px; 
+}
+.right-panel {
+    height: fit-content;
+}
+.row{
+    height: max-content;
+}
+.submit-btn {
+    text-align:center;
+    margin-left: auto;
+    margin-right: auto;
+    width: fit-content;
+}
+.tablehead {
+    background-color: #fa0404;
+    width: 50%;
+    margin: auto;
+    text-align: center;
+    color: ghostwhite;
+    font-weight: bolder;
+    font-size: larger;
+    margin-top: 96px;
+}
+
+table {
+    background-color: #f1efec;
+    width: 100%;
+    padding: 0px 2px;
+    /* border: 6px solid #ea0000; */
+    margin-left:auto;
+    margin-right:auto;
+    margin-bottom: 0px;
+}
+.table-responsive{
+    border: 6px solid rgb(250, 4, 4);
+    margin: 4%;
+    width: 92%;
+    overflow-x: auto;
+    margin-top: 0px;
+}
+td {
+    padding: 5px;
+    border: 2px solid #ea0000;
+    font-size: medium;
+    text-align: center;
+}
+.web-background{
+    display: inline-flex;
+    padding-top: 11px;
+    background-color: rgb(235, 235, 235);
+}
+.welcome{
+    padding: 15%;
+    height: 80%;
+    font-size: larger;
+    font-weight: bold;
+    color: rgb(65, 61, 61);
+}
+
+#XBoard :first-child {
+    font-style: italic;
+}
