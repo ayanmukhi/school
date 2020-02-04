@@ -176,7 +176,7 @@ var stu_module = ( function() {
             console.log(datum);
             $.ajax({
                 method : "POST",
-                url: "php/slim/profile/index.php/api/v1/customer",
+                url: "php/slim/profile/index.php/api/v1/login/students",
                 data: datum,
                 async: false,
                 success: function(result) {

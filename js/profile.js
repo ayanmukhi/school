@@ -123,7 +123,7 @@ var profile_module = (function(){
     var populate = function(sic) {
         $.ajax({
             method : "get",
-            url: 'php/slim/profile/index.php/api/v1/customer/'+sic,
+            url: 'php/slim/profile/index.php/api/v1profile/students/'+sic,
             success : function(result) {
                 details = result.result;
                 
@@ -157,7 +157,7 @@ var profile_module = (function(){
                             flag++;
                         }
                     }
-                    $("#sic").val(details['sic']);
+                    
                     first.val(first_name);
                     second.val(second_name);
                     third.val(third_name);
@@ -180,7 +180,8 @@ var profile_module = (function(){
                     first.val(first_name);
                     third.val(third_name);
                 }
-                
+                $("#sic").val(details['sic']);
+                    console.log($("#sic").val(  ));
                 fatherName.val(details['father_name']);
                 motherName.val(details['mother_name']);
                 dob.val(details['dob']);
@@ -343,7 +344,7 @@ var profile_module = (function(){
             $.ajax({
                 method : "put",
                 data:datum,
-                url: 'php/slim/profile/index.php/api/v1/customer',
+                url: 'php/slim/profile/index.php/api/v1/profile/students',
                 success: function (result) {
                     if( result.status == 200 ) {
                         location = "../index.php";
@@ -705,9 +706,9 @@ var profile_module = (function(){
         if (res == true) {
             $.ajax({
                 method : "delete",
-                url: 'php/slim/profile/index.php/api/v1/customer',
+                url: 'php/slim/profile/index.php/api/v1/profile/students',
                 success: function (result) {
-                    if( result.status == 200 ) {
+                    if( result.status == 200 ) {    
                         location = "../index.php";
                     }
                 }

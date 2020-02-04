@@ -29,10 +29,11 @@ var login_js = ( function(){
         if(user_err == 0 && pass_err == 0) {
             
             var datum = JSON.stringify($("#form").serializeArray());
+
             console.log(datum);
             $.ajax({
                 method:"POST",
-                url:"php/slim/login/index.php/api/v1/customer",
+                url:"php/slim/profile/index.php/api/v1/login/students",
                 data: datum,
                 success: function(result) {
 

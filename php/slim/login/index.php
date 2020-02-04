@@ -98,7 +98,7 @@ $app->delete('/api/v1/customer', function(Request $request, Response $response)
 
 
 //login a customer
-$app->post('/api/v1/customer', function(Request $request, Response $response)
+$app->post('/api/v1/customers', function(Request $request, Response $response)
 {
     $dbobj = new dbconnect\dbconnection();
     $conn = $dbobj->connect();
