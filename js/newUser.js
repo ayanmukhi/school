@@ -81,7 +81,7 @@ var stu_module = ( function() {
         phone = $("#phoneNumber");
         phone_help = $("#phoneHelp");
         hobbies = $("input[type='checkbox']");
-        gender_options = $("input[name = 'customRadioInline1']");
+        gender_options = $("input[name = 'gender']");
         del = $("#del_btn");
         reset = $("#reset_btn");
         incorrect = $("#invalid_input_data");
@@ -158,7 +158,7 @@ var stu_module = ( function() {
     };
 
     //function to submit data upon correct validation
-    var check_submit =function() {
+    var check_submit = function() {
         nameThird();
         nameFirst();
         nameSecond();
@@ -171,21 +171,48 @@ var stu_module = ( function() {
         email_val();
         age_check();
         count_error();
+        total_err = 0;
         if(total_err == 0){
-            var datum = JSON.stringify($("#form").serializeArray());
-            console.log(datum);
-            $.ajax({
-                method : "POST",
-                url: "php/slim/profile/index.php/api/v1/login/students",
-                data: datum,
-                async: false,
-                success: function(result) {
-                    if( result.status == 200) { 
-                        clear_fields(); 
-                        location = "../index.php"; 
+            var formData = new FormData(form);
+            result = {};
+            var hobbies;
+            var init_hobby_array = true;
+            for (var entry of formData.entries())
+            {
+                var name = entry[0];    
+                var value = entry[1];
+                if( name == "hobby") {
+                    
+                    if(init_hobby_array) {
+                        result["\"" + "hobby" + "\""] = [];
+                        init_hobby_array = false;
                     }
+                    result["\"" + "hobby" + "\""].push(value);             
                 }
-            });
+                else {
+                    result["\"" + name + "\""] = value;
+                }
+            }
+            if(result.hasOwnProperty('\"gender\"') == false) {
+                result["\"" + "gender" + "\""] = "";
+            }
+            if(result.hasOwnProperty('\"hobby\"') == false) {
+                result["\"" + "hobby" + "\""] = [];
+            }
+            console.log(result);
+            
+            // $.ajax({
+            //     method : "POST",
+            //     url: "php/slim/profile/index.php/api/v1/students",
+            //     data: result,
+            //     async: false,
+            //     success: function(result) {
+            //         if( result.status == 200) { 
+            //             clear_fields(); 
+            //             location = "../index.php"; 
+            //         }
+            //     }
+            // });
             return false;
             
         }

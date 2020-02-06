@@ -10,7 +10,7 @@ var login_js = ( function(){
         user_err = 1;
         pass_err = 1;
         credentials = $("#credentials");
-        username = $("#email");
+        username = $("#username");
         password = $("#password");
         login = $("#login_button");
         register = $("#register");
@@ -22,19 +22,32 @@ var login_js = ( function(){
         password.on("keyup", function(){password_val()});
     };
 
+
+    //function to redirect to register a new user
     var register_user = function() {
         location = "register.php";
     }
+
+    //function to check credentials and submit data
     var check_credentials = function() {
         if(user_err == 0 && pass_err == 0) {
             
-            var datum = JSON.stringify($("#form").serializeArray());
-
-            console.log(datum);
+            var formData = new FormData(form);
+            result = {};
+            var hobbies;
+            var init_hobby_array = true;
+            for (var entry of formData.entries())
+            {
+                var name = entry[0];
+                var value = entry[1];
+                result["\"" + name + "\""] = value;
+            }
+            console.log(result);
+            return false;
             $.ajax({
                 method:"POST",
-                url:"php/slim/profile/index.php/api/v1/login/students",
-                data: datum,
+                url:"php/slim/login/index.php/api/v1/students",
+                data: result,
                 success: function(result) {
 
                     console.log(result);
@@ -52,6 +65,8 @@ var login_js = ( function(){
         }
     };
 
+
+    //function to validate username
     var username_val = function() {
         if(( /\S+@\S+/.test(username.val()) == false ) || (username.val() == "")) {
             user_err = 1;
@@ -60,6 +75,9 @@ var login_js = ( function(){
             user_err = 0;
         }
     };
+
+
+    //function to validate password
     var password_val = function() {
         //console.log("pass len : " + (password.val()).length);
         if(( /(?=[a-z])/.test(password.val()) == false) || ( /(?=[0-9])/.test(password.val()) == false) || ( /(?=[A-Z])/.test(password.val()) == false) || ( (password.val()).length < 4 )) {

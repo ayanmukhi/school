@@ -80,7 +80,7 @@ var profile_module = (function(){
         phone = $("#phoneNumber");
         phone_help = $("#phoneHelp");
         hobbies = $("input[type='checkbox']");
-        gender_options = $("input[name = 'customRadioInline1']");
+        gender_options = $("input[name = 'gender']");
         del = $("#del_btn");
         reset = $("#reset_btn");
         incorrect = $("#invalid_input_data");
@@ -123,9 +123,9 @@ var profile_module = (function(){
     var populate = function(sic) {
         $.ajax({
             method : "get",
-            url: 'php/slim/profile/index.php/api/v1profile/students/'+sic,
-            success : function(result) {
-                details = result.result;
+            url: 'php/slim/profile/index.php/api/v1/students/'+sic,
+            success : function(response) {
+                details = response.result;
                 
                 var nameStr = details['stu_name'];
                 count_space = 0;
@@ -188,7 +188,7 @@ var profile_module = (function(){
 
                 var gender = details['gender'];
                 if( gender != "" ) {
-                    gender_options = $("input[name='customRadioInline1']");
+                    gender_options = $("input[name='gender']");
                     for( i = 0 ; i < gender_options.length ; i++ ) {
                         if( gender_options[i].value == gender ) {
                             gender_options[i].checked = true;
@@ -201,8 +201,8 @@ var profile_module = (function(){
 
                 var hobbyIndex = 0;
                 var hobbySelected = [];
-                if( result.hasOwnProperty('hobby')) {
-                    hobbySelected = result.hobby;
+                if( response.hasOwnProperty('hobby')) {
+                    hobbySelected = response.hobby;
                     
                     for ( i = 0 ; i < hobbies.length, hobbyIndex < hobbySelected.length; i++ ) {
                         if( hobbies[i].value == hobbySelected[hobbyIndex]["hobby_name"] ) {
@@ -215,8 +215,6 @@ var profile_module = (function(){
                     }
                 }
                 
-
-                console.log(result.data);
                 x_board_selected = details['matric_board'];
                 x_options = $("option[name='Xoptions']");
                 for(  i = 0 ; i < x_options.length ; i++ ){
@@ -336,17 +334,41 @@ var profile_module = (function(){
         
         count_error();
         if(total_err == 0){
-            var returned_sic;
-           // $.blockUI({ message: '<h1>Please wait..</h1>' });
-            var datum = JSON.stringify($("#form").serializeArray());
-            console.log(datum);
+           var formData = new FormData(form);
+           result = {};
+           var hobbies;
+           var init_hobby_array = true;
+           for (var entry of formData.entries())
+            {
+                var name = entry[0];    
+                var value = entry[1];
+                if( name == "hobby") {
+                    
+                    if(init_hobby_array) {
+                        result["\"" + "hobby" + "\""] = [];
+                        init_hobby_array = false;
+                    }
+                    result["\"" + "hobby" + "\""].push(value);             
+                }
+                else {
+                    result["\"" + name + "\""] = value;
+                }
+            }
+            if(result.hasOwnProperty('\"gender\"') == false) {
+                result["\"" + "gender" + "\""] = "";
+            }
+            if(result.hasOwnProperty('\"hobby\"') == false) {
+                result["\"" + "hobby" + "\""] = [];
+            }
+           console.log(result);
+           
             
             $.ajax({
                 method : "put",
-                data:datum,
-                url: 'php/slim/profile/index.php/api/v1/profile/students',
-                success: function (result) {
-                    if( result.status == 200 ) {
+                data:result,
+                url: 'php/slim/profile/index.php/api/v1/students',
+                success: function (response) {
+                    if( response.status == 200 ) {
                         location = "../index.php";
                     }
                     else {
@@ -467,8 +489,8 @@ var profile_module = (function(){
             method: "POST",
             async:false,
             data: {phone:phone.val()},
-            success: function(data) {
-                if( data == 1) {
+            success: function(response) {
+                if( response == 1) {
                     duplicacy = true;
                 }
                 else {
@@ -501,8 +523,8 @@ var profile_module = (function(){
             method: "POST",
             async:false,
             data: {email:email.val()},
-            success: function(data) {
-                if( data == 1) {
+            success: function(response) {
+                if( response == 1) {
                     duplicacy = true;
                 }
                 else {
@@ -701,14 +723,14 @@ var profile_module = (function(){
 
 
     //function for deleting a row 
-    var deleteRow = function(r) {
+    var deleteRow = function() {
         var res = confirm("press OK to proceed for deletion !!");
         if (res == true) {
             $.ajax({
                 method : "delete",
-                url: 'php/slim/profile/index.php/api/v1/profile/students',
-                success: function (result) {
-                    if( result.status == 200 ) {    
+                url: 'php/slim/profile/index.php/api/v1/students/' + $("#sic").val(),
+                success: function (response) {
+                    if( response.status == 200 ) {    
                         location = "../index.php";
                     }
                 }

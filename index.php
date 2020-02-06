@@ -40,8 +40,7 @@
                         <form id="form">
                             <div class="form-group">
                               <label for="exampleInputEmail1">EMAIL ID</label>
-                              <input type="text" class="form-control" id="email" placeholder="abc@example.com" name="email" >
-                              <small id="emailHelp" class="form-text invalidError"></small>
+                              <input type="text" class="form-control" id="username" placeholder="abc@example.com" name="username" >
                             </div>
                             <div class="form-group">
                                 <label >PASSWORD</label>

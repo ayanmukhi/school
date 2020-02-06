@@ -72,15 +72,15 @@
                                 <label  class="labelDsip" >GENDER</label>
                                 <div class="custom-radio form-control" style="height: auto;">
                                     <div style="display: inline;padding: 0px 25px;" >
-                                        <input type="radio" id="radioSexMale" name="customRadioInline1" value="male" class="custom-control-input" style="padding: 20px;">
+                                        <input type="radio" id="radioSexMale" name="gender" value="male" class="custom-control-input" style="padding: 20px;">
                                         <label class="custom-control-label" for="radioSexMale">Male</label>
                                     </div >
                                     <div  style="display: inline;padding: 0px 25px;">
-                                        <input type="radio" id="radioSexFemale" name="customRadioInline1" value="female" class="custom-control-input">
+                                        <input type="radio" id="radioSexFemale" name="gender" value="female" class="custom-control-input">
                                         <label class="custom-control-label" for="radioSexFemale">Female</label>
                                     </div >
                                     <div style="display: inline;padding: 0px 25px;">
-                                        <input type="radio" id="radioSexOther" name="customRadioInline1" value="other" class="custom-control-input">
+                                        <input type="radio" id="radioSexOther" name="gender" value="other" class="custom-control-input">
                                         <label class="custom-control-label" for="radioSexOther">Other</label>
                                     </div>
                                 </div>
@@ -155,7 +155,7 @@
                 </div>
                 <div class="form-row">
                     <div class="col-md-6">
-                        <label class="labelDsip">PHONE NUMBER<i style="color: rgba(255, 0, 0, 0.747);"> *</i></label>
+                        <label class="labelDsip">MOBILE NUMBER<i style="color: rgba(255, 0, 0, 0.747);"> *</i></label>
                         <div class="form-row">
                             <div class="col-md-2">
                                 <input type="number" style="padding-left: 0px;" class="form-control" id="phoneCountryCode" placeholder="  +91" disabled="disabled">

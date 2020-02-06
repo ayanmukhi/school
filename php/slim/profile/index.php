@@ -2,6 +2,7 @@
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use config\connection as dbconnect;
+use config as config;
 
 require './../vendor/autoload.php';
 $configuration = [
@@ -14,46 +15,20 @@ $configuration = [
 $c = new \Slim\Container($configuration);               
 $app = new \Slim\App($c);
 
-$app->group('/api/v1/login/students', function () use ($app) {
 
-        //login a customer
-    $app->post('', function(Request $request, Response $response)
-    {
-        $dbobj = new dbconnect\dbconnection();
-        $conn = $dbobj->connect();
-        $vars = json_decode(file_get_contents('php://input'));
-        $username = $vars[0]->value;
-        $password = $vars[1]->value;
-        $stmt = $conn->prepare("SELECT * FROM student WHERE email = :username AND password = :password");
-        
-        $stmt->bindParam(':username', $username);
-        $stmt->bindParam(':password', $password);
-
-        $stmt->execute();
-        if ($stmt->rowCount() == 1) {
-            $result = $stmt->fetchAll(PDO::FETCH_ASSOC); // set the resulting array to associative
-            session_start();
-            $_SESSION['user'] = $result[0]['stu_name'];
-            $_SESSION['sic'] = $result[0]['sic'];
-            return $response->withJson(['status'=>200, 'data'=>$result]);
-
-        } else {
-            $newresponse = $response->withStatus(401);
-            return $newresponse->withJson(['status'=>401]);
-        }
-        
-    });
-
-});
-
-$app->group('/api/v1/profile/students', function () use ($app) {
+$app->group('/api/v1/students', function () use ($app) {
     
-        //display a record
+        //get a record
         $app->get('/{id}', function(Request $request, Response $response, array $args)
         { 
             $dbobj = new dbconnect\dbconnection();
             $conn = $dbobj->connect();
+            $conn->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
             $sic = $args['id'];
+            if (preg_match("/^\d+$/",$sic) == false) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["success"=>false, 'message'=>'sic must be a number']);
+            }
 
             $stmt = $conn->prepare("SELECT * FROM student WHERE sic = $sic");
             $stmt->execute();
@@ -76,24 +51,23 @@ $app->group('/api/v1/profile/students', function () use ($app) {
                 }
             } else {
                 $newresponse = $response->withStatus(404);
-                return $newresponse->withJson(['status'=>404]);
+                return $newresponse->withJson(['status'=>404, 'message'=>'no records exists with id='.$sic]);
             }       
         });
 
 
-        //display all record
+        //get all record
         $app->get('', function(Request $request, Response $response)
         { 
             $dbobj = new dbconnect\dbconnection();
             $conn = $dbobj->connect();
+            $conn->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
             $studentrecords = [];
             $hobbyrecords = [];
             $stmt = $conn->prepare("SELECT * FROM student");
             $stmt->execute();
             
             $hobbystmt = $conn->prepare("SELECT * FROM hobby");
-            
-
 
             if ($stmt->rowCount() >= 1) {  
                 while($record = $stmt->fetch()) {
@@ -104,29 +78,33 @@ $app->group('/api/v1/profile/students', function () use ($app) {
                     while($hobby = $hobbystmt->fetch()){
                         array_push($hobbyrecords,$hobby);
                     }
-                    return $response->withJson(['status'=>200, 'result'=>$studentrecords, 'hobby'=>$hobbyrecords]);
+                    return $response->withJson(['success'=>true, 'result'=>$studentrecords, 'hobby'=>$hobbyrecords]);
                 } else {
-                    return $response->withJson(['status'=>200, 'result'=>$studentrecords]);
+                    return $response->withJson(['success'=>true, 'result'=>$studentrecords]);
                 }
             } else {
                 $newresponse = $response->withStatus(404);
-                return $newresponse->withJson(['status'=>404]);
+                return $newresponse->withJson(['success'=>false, 'message'=>'no records exists']);
             }      
         });
 
 
 
 
-        //delete a customer record
-        $app->delete('', function(Request $request, Response $response) 
+        //delete a student record
+        $app->delete('/{sic}', function(Request $request, Response $response, array $args) 
         { 
             $dbobj = new dbconnect\dbconnection();
             $conn = $dbobj->connect();
-            session_start();
-            $sic = $_SESSION['sic'];
-
+            $conn->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
+            $sic = $args['sic'];
+            if (preg_match("/^\d+$/",$sic) == false) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["success"=>false, 'message'=>'sic must be a number']);
+            }
             
             $sql = "DELETE FROM student WHERE sic = $sic";
+            
             $stmt = $conn->prepare($sql);
             $stmt->execute();
 
@@ -134,64 +112,160 @@ $app->group('/api/v1/profile/students', function () use ($app) {
             $hobbystmt = $conn->prepare($hobbysql);
             $hobbystmt->execute();
 
-            if (($stmt->rowCount() == 1 ) and ($hobbystmt->rowCount() == 1)) {
-                session_destroy();
-                return $response->withJson(['status'=>200]);
+            if ($stmt->rowCount() == 1) {
+                $newresponse = $response->withStatus(200);
+                return $newresponse->withJson(['success'=>true]);
             } else {
-                $newresponse = $response->withStatus(404);
-                return $newresponse->withJson(['status'=>404]);
+                $newresponse =  $response->withStatus(404);
+                return $newresponse->withJson(["success"=>false]);
             }
                 
         });
 
 
 
-        //insert a new customer record
+        //insert a new student record
         $app->post('', function(Request $request, Response $response)
         {
             $dbobj = new dbconnect\dbconnection();
+            $obj = new config\duplicate();
             $conn = $dbobj->connect();
-            $vars = json_decode(file_get_contents('php://input'));
-            $index = 0;
+            $conn->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
+            $vars = json_decode($request->getBody());
 
 
-            $fname = $vars[$index++]->value;
-            $mname = $vars[$index++]->value;
-            $tname = $vars[$index++]->value;
+
+            $fname = $vars->nameFirst;
+            if( preg_match("/^[a-zA-Z]+$/", $fname) == false ) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["success"=>false, "message"=>"first name is not valid"]);
+            }
+
+            $mname = $vars->nameSecond;
+            if( preg_match("/^([a-zA-Z]*)$/", $mname) == false ) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["success"=>false, "message"=>"middle name is not valid"]);
+            }
+
+            $tname = $vars->nameThird;
+            if( preg_match("/^[a-zA-Z]+$/", $tname) == false ) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["success"=>false, "message"=>"last name is not valid"]);
+            }
             $namestr = "a";
             if( $mname != "") {
                 $namestr = $fname." ".$mname." ".$tname;
-            }
-            else {
+            } else {
                 $namestr = $fname." ".$tname;
             }
 
-            $fatherName = $vars[$index++]->value;
-            $motherName = $vars[$index++]->value;
-            $dob = $vars[$index++]->value;
+            $fatherName = $vars->fatherName;
+            if( preg_match("/^[a-zA-Z][a-zA-Z\s]*$/", $fatherName) == false ) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["success"=>false, "message"=>"father name is not valid"]);
+            }
+            $motherName = $vars->motherName;
+            if( preg_match("/^[a-zA-Z][a-zA-Z\s]*$/", $motherName) == false ) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["success"=>false, "message"=>"mother name is not valid"]);
+            }
 
-            $gender = "";
-            if($vars[6]->name == 'customRadioInline1'){
-                $gender = $vars[$index++]->value;
-            } else {
-                $gender = "";
+
+            $dob = $vars->date;
+            $today = date("Y-m-d");
+            $diff = date_diff(date_create($dob), date_create($today));
+            $age = $diff->format('%y');
+            if( $age > 20 or $age < 15) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["success"=>false, "message"=>"age must be between 15 - 20 years"]);
+            }
+
+            $gender = $vars->gender;
+            if( preg_match("/^(male|female|other|)$/", $gender) == false) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["success"=>false, "message"=>"gender is invalid"]);
+            }
+
+
+
+            $streetaddress = $vars->presentAddress;
+            if( preg_match("/^([a-zA-Z0-9][a-zA-z0-9,;(\/)(\\)(\\\n)]*|)$/", $streetaddress) == false) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["success"=>false, "message"=>"street name is not valid"]);
+            }
+
+
+            $matricboard = $vars->classX;
+            if( preg_match("/^CBSE|ICSE|CHSE$/", $matricboard) == false ) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["success"=>false, "message"=>"class X board is not valid"]);
+            }
+
+
+            $matricroll = $vars->XRoll;
+            if( preg_match("/^[a-zA-Z0-9][a-zA-Z0-9]*\/{0,1}[a-zA-Z0-9][a-zA-Z0-9]*$/", $matricroll) == false) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["success"=>false, "message"=>"class X roll is not valid"]);
+            }
+
+
+            $matricperc = $vars->XPerc;
+   
+            if((($matricperc != "") and ( preg_match("/^[0-9]([0-9]{0,1})(((.){1}([0-9]+))|())$/", $matricperc) == false) or ( number_format($matricperc) > 101 ) or ( number_format($matricperc) < 0 )) ) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["success"=>false, "message"=>"class X percentage is not valid", "value"=>number_format($matricperc)]);
+            }
+
+            $password = $vars->password;
+            if(( preg_match("/(?=[a-z])/", $password) == false) or ( preg_match("/(?=[A-Z])/", $password) == false) or ( preg_match("/(?=[0-9])/", $password) == false) or ( strlen($password) < 3)) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["success"=>false, "message"=>"password is not valid"]);
+            } 
+
+            $email = $vars->email;
+            if(preg_match("/[a-zA-Z0-9]+@([a-zA-z]+)/", $email) == false) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["success"=>false, "message"=>"username is not valid"]);
+            }
+            if( $obj->checkemail($email) != -1) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["success"=>false, "message"=>"user with this email is already registered, use a different email"]);
+            }
+
+            $phone = $vars->phone;
+            if( preg_match("/^[0-9]\d{9}$/", $phone) == false) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["success"=>false, "message"=>"phone number must be of 10 digits"]);
+            }
+            if( $obj->checkphone($phone) != -1) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["success"=>false, "message"=>"user with this phone number is already registered, use a different phone number"]);
+            }
+
+            $statelist = ["NONE","WEST BENGAL","GUJRAT","ODISHA","GOA"];
+            $state = $vars->state;
+            if( in_array($state, $statelist) == false) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["success"=>false, "message"=>"State is not in the list of options"]);
+            }
+
+            $districtlist = ["NONE","Alipurduar","Bankura","Birbhum","Ahmedabad","Amreli","Angul","Balangir","Ganjam","Khordha","North Goa","South Goa"];
+            $district = $vars->subcategory;
+            if( in_array($district, $districtlist) == false) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["success"=>false, "message"=>"district is not in the list of options"]);
             }
             
-            $streetaddress = $vars[$index++]->value;
-            $matricboard = $vars[$index++]->value;
-            $matricroll = $vars[$index++]->value;
-            $matricperc = $vars[$index++]->value;
-            $password = $vars[$index++]->value;
-            $email = $vars[$index++]->value;
-            $state = $vars[$index++]->value;
-            $district = $vars[$index++]->value;
-            $phone = $vars[$index++]->value;
-            $hobbies = [];
-            for( $i = $index; $i < sizeof($vars) ; $i++) {
-                if($vars[$i]->name == 'hobby') {
-                    array_push($hobbies, $vars[$i]->value);
+
+            $hobbylist = ["cricket", "football", "other"];
+            $hobbies = $vars->hobby;
+            foreach($hobbies as $val) {
+                if( in_array($val,$hobbylist) == false) {
+                    $newresponse = $response->withStatus(400);
+                    return $newresponse->withJson(["success"=>false, "message"=>$val." is not in the hobby list"]);
                 }
             }
+
             $stmt = $conn->prepare("INSERT INTO student (stu_name, gender, father_name, mother_name, dob, matric_board, matric_roll, matric_perc, password, state, district, street_address, phone, email)
             VALUES (:namestr, :gender, :fatherName, :motherName, :dob, :matric_board, :matric_roll, :matric_perc, :password, :state, :district, :street_address, :phone, :email)");
             
@@ -230,64 +304,169 @@ $app->group('/api/v1/profile/students', function () use ($app) {
                         $hobbystmt->execute();
                     }
                 }
-
-                //start the user session
-                session_start();
-                $_SESSION['user'] = $namestr;
-                $_SESSION['sic'] = $stu_sic;
-                return $response->withJson(['status'=>200]);
+                return $response->withJson(['success'=>true]);
 
             } else {
                 $newresponse = $response->withStatus(404);
-                return $newresponse->withJson(['status'=>404]);
+                return $newresponse->withJson(['success'=>false]);
             }
             
         });
 
 
-        //update a customer
+        //update a student record
         $app->put('', function(Request $request, Response $response) 
         { 
+            $obj = new config\duplicate(); //getting a instanse of duplicate class
             $dbobj = new dbconnect\dbconnection();
             $conn = $dbobj->connect();
-            $vars = json_decode(file_get_contents('php://input'));
-            $index = 0;
+            $conn->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
+            $vars = json_decode($request->getBody());
+            $count = 0;
+            foreach($vars as $key) {
+                $count++;
+            }
+            if( $count != 18) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["message"=>"request body is not appropriate"]);
+            }
+            $fname = $vars->nameFirst;
+            if( preg_match("/^[a-zA-Z]+$/", $fname) == false ) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["success"=>false, "message"=>"first name is not valid"]);
+            }
 
+            $mname = $vars->nameSecond;
+            if( preg_match("/^([a-zA-Z]*)$/", $mname) == false ) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["success"=>false, "message"=>"middle name is not valid"]);
+            }
 
-            $fname = $vars[$index++]->value;
-            $mname = $vars[$index++]->value;
-            $tname = $vars[$index++]->value;
+            $tname = $vars->nameThird;
+            if( preg_match("/^[a-zA-Z]+$/", $tname) == false ) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["success"=>false, "message"=>"last name is not valid"]);
+            }
             $namestr = "a";
             if( $mname != "") {
                 $namestr = $fname." ".$mname." ".$tname;
-            }
-            else {
+            } else {
                 $namestr = $fname." ".$tname;
             }
 
-            $fatherName = $vars[$index++]->value;
-            $motherName = $vars[$index++]->value;
-            $dob = $vars[$index++]->value;
+            $fatherName = $vars->fatherName;
+            if( preg_match("/^[a-zA-Z][a-zA-Z\s]*$/", $fatherName) == false ) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["success"=>false, "message"=>"father name is not valid"]);
+            }
+            $motherName = $vars->motherName;
+            if( preg_match("/^[a-zA-Z][a-zA-Z\s]*$/", $motherName) == false ) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["success"=>false, "message"=>"mother name is not valid"]);
+            }
 
-            $gender = "";
-            if($vars[6]->name == 'customRadioInline1'){
-                $gender = $vars[$index++]->value;
-            } else {
-                $gender = "";
+
+            $dob = $vars->date;
+            $today = date("Y-m-d");
+            $diff = date_diff(date_create($dob), date_create($today));
+            $age = $diff->format('%y');
+            if( $age > 20 or $age < 15) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["success"=>false, "message"=>"age must be between 15 - 20 years"]);
+            }
+
+            $gender = $vars->gender;
+            if( preg_match("/^(male|female|other|)$/", $gender) == false) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["success"=>false, "message"=>"gender is invalid"]);
+            }
+
+
+
+            $streetaddress = $vars->presentAddress;
+            if( preg_match("/^([a-zA-Z0-9][a-zA-z0-9,;(\/)(\\)(\\\n)]*|)$/", $streetaddress) == false) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["success"=>false, "message"=>"street name is not valid"]);
+            }
+
+
+            $matricboard = $vars->classX;
+            if( preg_match("/^CBSE|ICSE|CHSE$/", $matricboard) == false ) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["success"=>false, "message"=>"class X board is not valid"]);
+            }
+
+
+            $matricroll = $vars->XRoll;
+            if( preg_match("/^[a-zA-Z0-9][a-zA-Z0-9]*\/{0,1}[a-zA-Z0-9][a-zA-Z0-9]*$/", $matricroll) == false) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["success"=>false, "message"=>"class X roll is not valid"]);
+            }
+
+
+            $matricperc = $vars->XPerc;
+            if((($matricperc != "") and ( preg_match("/^[0-9]([0-9]{0,1})(((.){1}([0-9]+))|())$/", $matricperc) == false) or ( number_format($matricperc) > 101 ) or ( number_format($matricperc) < 0 )) ) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["success"=>false, "message"=>"class X percentage is not valid", "value"=>number_format($matricperc)]);
+            }
+
+            $password = $vars->password;
+            if(( preg_match("/(?=[a-z])/", $password) == false) or ( preg_match("/(?=[A-Z])/", $password) == false) or ( preg_match("/(?=[0-9])/", $password) == false) or ( strlen($password) < 3)) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["success"=>false, "message"=>"password is not valid"]);
+            } 
+            $stu_sic = $vars->sic;
+            if (preg_match("/^\d+$/",$stu_sic) == false) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["success"=>false, 'message'=>'sic must be a number']);
+            }
+
+            $email = $vars->email;
+            if(preg_match("/[a-zA-Z0-9]+@([a-zA-z]+)/", $email) == false) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["success"=>false, "message"=>"username is not valid"]);
+            }
+            if(($obj->checkemail($email) != -1) and ($obj->checkemail($email) != $stu_sic)) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["success"=>false, "message"=>"record already exist with this email, kindly use a different email register"]);
+            }
+
+            $phone = $vars->phone;
+            if( preg_match("/^[0-9]\d{9}$/", $phone) == false) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["success"=>false, "message"=>"phone number must be of 10 digits"]);
+            }
+            if((($obj->checkemail($phone) != -1)) and ($obj->checkphone($phone) == $stu_sic)) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["success"=>false, "message"=>"user with this phone number is already registered, use a different phone number"]);
+            }
+
+            
+            $statelist = ["NONE","WEST BENGAL","GUJRAT","ODISHA","GOA"];
+            $state = $vars->state;
+            if( in_array($state, $statelist) == false) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["success"=>false, "message"=>"State is not in the list of options"]);
+            }
+
+            $districtlist = ["NONE","Alipurduar","Bankura","Birbhum","Ahmedabad","Amreli","Angul","Balangir","Ganjam","Khordha","North Goa","South Goa"];
+            $district = $vars->subcategory;
+            if( in_array($district, $districtlist) == false) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["success"=>false, "message"=>"district is not in the list of options"]);
+            }
+
+            
+
+            $hobbylist = ["cricket", "football", "other"];
+            $hobbies = $vars->hobby;
+            foreach($hobbies as $val) {
+                if( in_array($val,$hobbylist) == false) {
+                    $newresponse = $response->withStatus(400);
+                    return $newresponse->withJson(["success"=>false, "message"=>$val." is not in the hobby list"]);
+                }
             }
             
-            $streetaddress = $vars[$index++]->value;
-            $matricboard = $vars[$index++]->value;
-            $matricroll = $vars[$index++]->value;
-            $matricperc = $vars[$index++]->value;
-            $password = $vars[$index++]->value;
-            $email = $vars[$index++]->value;
-            $state = $vars[$index++]->value;
-            $district = $vars[$index++]->value;
-            $phone = $vars[$index++]->value;
-            
-
-            $stu_sic = $vars[sizeof($vars) - 1]->value;
 
             $stmt = $conn->prepare("UPDATE student SET stu_name = :namestr, gender = :gender, father_name = :fatherName, mother_name = :motherName, dob = :dob, matric_board = :matric_board, matric_roll = :matric_roll, matric_perc = :matric_perc, password = :password, state = :state, district = :district, street_address = :street_address, phone = :phone, email = :email WHERE sic = $stu_sic");
             
@@ -306,21 +485,10 @@ $app->group('/api/v1/profile/students', function () use ($app) {
             $stmt->bindParam(':phone', $phone);
             $stmt->bindParam(':email', $email);
 
-
-            
-            
             if ($stmt->execute()) {
-
                 $hobbydel = "DELETE FROM hobby WHERE sic = $stu_sic";
                 $hobbydelstmt = $conn->prepare($hobbydel);
                 $hobbydelstmt->execute();
-
-                $hobbies = [];
-                for( $i = $index; $i < sizeof($vars) ; $i++) {
-                    if($vars[$i]->name == 'hobby[]') {
-                        array_push($hobbies, $vars[$i]->value);
-                    }
-                }
 
                 //pushing hobbies to hobby table if any
                 if( sizeof($hobbies) > 0) {
@@ -330,16 +498,15 @@ $app->group('/api/v1/profile/students', function () use ($app) {
                         $hobbystmt->execute();
                     }
                 }
-                return $response->withJson(['status'=>200, 'lenght'=>sizeof($hobbies)]);
+                $newresponse = $response->withStatus(200);
+                return $newresponse->withJson(['success'=>true, "message"=>'record is successfully updated']);
 
             } else {
                 $newresponse = $response->withStatus(404);
-                return $newresponse->withJson(['status'=>404]);
+                return $newresponse->withJson(['success'=>false, "message"=>"record with sic=".$stu_sic." doesnot exists"]);
             }
         });
 });
-
-
-
+    
 
 $app->run();

@@ -99,7 +99,7 @@
             // // urlstr = "php/slim/profile/index.php/api/v1/customer/" + sic;
             $.ajax({
               method:"get",
-              url: "php/slim/profile/index.php/api/v1/profile/students/<?php echo $_SESSION['sic'] ?>",
+              url: "php/slim/profile/index.php/api/v1/students/<?php echo $_SESSION['sic'] ?>",
               success: function(data) {
                 console.log(data);
                 if( data.status == 200 ) {
