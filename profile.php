@@ -1,12 +1,4 @@
-<?php
-      session_start();
-      if(isset($_SESSION['user'])) {
-        include "php/conn.php";
-      }
-      else {
-        header("location: index.php");
-      }
-    ?>
+
 <!doctype html>
 <html lang="en">
   <head>

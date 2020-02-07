@@ -24,7 +24,7 @@ $app->post('/api/v1/students', function(Request $request, Response $response)
     $vars = json_decode($request->getBody());
     if( array_key_exists('username', $vars) == false || $vars->username == null) {
         $newresponse = $response->withStatus(401);
-        return $newresponse->withJson(['success'=>false, 'message'=>'username is required']);
+        return $newresponse->withJson(['success'=>false, 'message'=>'username is required ']);
     }
     if( array_key_exists('password', $vars) == false || $vars->password == null) {
         $newresponse = $response->withStatus(401);
@@ -52,7 +52,10 @@ $app->post('/api/v1/students', function(Request $request, Response $response)
     if ($stmt->rowCount() == 1) {
         $result = $stmt->fetch(); // set the resulting array to associative
         $sic = $result['sic'];
-        $token = $jwt->jwttoken($sic);
+        $token = $jwt->jwttokenencryption($sic);
+        $name = "jwttoken";
+        $value = $token;
+        setcookie($name, $value, time() + (86400 * 30), "/", true); // 86400 = 1 day
         return $response->withJson(["success"=>true, "data"=>$result, "token"=>$token]);
 
     } else {
@@ -60,6 +63,22 @@ $app->post('/api/v1/students', function(Request $request, Response $response)
         return $newresponse->withJson(["success"=>false, "message"=>"credentials dosent match each other"]);
     }
     
+});
+$app->any('/tokens', function(Request $request, Response $response) {
+    
+    $jwt = new config\jwt();
+
+    $vars = json_decode($request->getBody());
+    
+        
+    $newresponse = $response->withStatus(400);
+    $tokens= json_decode($jwt->jwttokendecryption($vars->token));
+    return $newresponse->withJson(["verified"=>"NOT OKAY", "token"=>$tokens->verification]);
+    // if($jwt->jwttokendncryption($vars->token)) {
+    //     return $response->withJson(["verified"=>"OK"]);
+    // }
+    // $newresponse = $response->withStatus(400);
+    // return $newresponse->withJson(["verified"=>"NOT OKAY"]);
 });
 
 $app->run();

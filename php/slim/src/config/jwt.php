@@ -1,32 +1,55 @@
 <?php
 namespace config;
 
+use \Firebase\JWT\JWT as token; 
+
 class jwt 
 {
+    private $secretkey;
 
-    public function jwttoken($sic) 
+    public function __construct() {
+        $this->secretkey = 'secret';
+    }
+
+    public function jwttokenencryption($sic) 
     {   
-        $secretkey = 'secret'.$sic;
-        $str = "";
-        
-        //constructing header
-        $header = json_encode(array('alg' => "HS256", 'typ' => "JWT"));
-
-        //encrypting header
-        $headerstr = base64_encode( $header );
 
         //constructing payload
-        $payload = json_encode(array('sub' => "1234567", 'sic' => $sic));
+        $payload = json_encode(array('sub' => "authenticate", 'sic' => $sic));
 
-        //encrypting header
-        $payloadstr = base64_encode( $payload );
+        //encrypting using firebase library
+        $encoded = token::encode($payload, $this->secretkey, 'HS256');
 
-        //constructing signature
-        $signature =  hash_hmac('sha256', $headerstr.$payload, $secretkey);
+        return $encoded;
 
+    }
 
-        return $headerstr.".".$payloadstr.".".$signature;
+    public function jwttokendecryption($token) {
+       
+        $obj = [];
+        $error = false;
+        //decypting signature using firebase library
+        try {
+            
+            $decoded = token::decode($token, $this->secretkey, array('HS256'));
 
+        } catch(\Exception $e) {
+            $result['message']=$e->getMessage();
+            $error = true;
+        } finally {
+            if($error) {
+                $obj["verification"]= "failed";
+                return json_encode($obj);   
+            } else {
+                $obj["verification"] = "passed";
+                $data = json_decode($decoded);
+                $obj["sic"] = $data->sic;
+                return json_encode($obj);
+            }        
+        }
+        
+        
+        
     }
 
 }

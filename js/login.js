@@ -40,18 +40,18 @@ var login_js = ( function(){
             {
                 var name = entry[0];
                 var value = entry[1];
-                result["\"" + name + "\""] = value;
+                result[ name ] = value;
             }
-            console.log(result);
-            return false;
+            var datum = JSON.stringify(result);
+            
+            
             $.ajax({
                 method:"POST",
                 url:"php/slim/login/index.php/api/v1/students",
-                data: result,
+                data: datum,
                 success: function(result) {
-
-                    console.log(result);
-                    if(result.status == 200){
+                    console.log("res " + result);
+                    if(result.success){
                         location = "profile.php";
                     }
                     else {
@@ -59,9 +59,11 @@ var login_js = ( function(){
                     }
                 }
             });
+            return false;
         }
         else {
             credentials.html("Incorrect credentials");
+            return false;
         }
     };
 

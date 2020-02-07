@@ -21,16 +21,40 @@ $app->group('/api/v1/students', function () use ($app) {
         //get a record
         $app->get('/{id}', function(Request $request, Response $response, array $args)
         { 
-            $dbobj = new dbconnect\dbconnection();
-            $conn = $dbobj->connect();
-            $conn->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
+
+            $jwt = new config\jwt();
+            $vars = json_decode($request->getBody());
+            //echo "body".$vars;
+            if( property_exists($vars, "token") == false) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["message"=>"required jwt token is not recieved"]);
+            }
+            $tokens = json_decode($jwt->jwttokendecryption($vars->token));
+            if( $tokens->verification == "failed") {
+                $newresponse = $response->withStatus(401);
+                return $newresponse->withJson(["message"=>"you are not authorized"]);
+            }
+
             $sic = $args['id'];
             if (preg_match("/^\d+$/",$sic) == false) {
                 $newresponse = $response->withStatus(400);
                 return $newresponse->withJson(["success"=>false, 'message'=>'sic must be a number']);
             }
 
+            if( $tokens->sic != $sic ) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["message"=>"you cann't see other records"]);
+            }
+
+
+            $dbobj = new dbconnect\dbconnection();
+            $conn = $dbobj->connect();
+             
+            
+
+            $conn->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
             $stmt = $conn->prepare("SELECT * FROM student WHERE sic = $sic");
+            
             $stmt->execute();
             
             $hobbystmt = $conn->prepare("SELECT * FROM hobby WHERE sic = $sic");
@@ -59,6 +83,23 @@ $app->group('/api/v1/students', function () use ($app) {
         //get all record
         $app->get('', function(Request $request, Response $response)
         { 
+
+            $jwt = new config\jwt();
+
+            $vars = json_decode($request->getBody());
+            //echo "body".$vars;
+            if( property_exists($vars, "token") == false) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["message"=>"required jwt token is not recieved"]);
+            }
+            $tokens = json_decode($jwt->jwttokendecryption($vars->token));
+            if( $tokens->verification == "failed") {
+                $newresponse = $response->withStatus(401);
+                return $newresponse->withJson(["message"=>"you are not authorized"]);
+            } 
+
+
+
             $dbobj = new dbconnect\dbconnection();
             $conn = $dbobj->connect();
             $conn->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
@@ -94,14 +135,36 @@ $app->group('/api/v1/students', function () use ($app) {
         //delete a student record
         $app->delete('/{sic}', function(Request $request, Response $response, array $args) 
         { 
-            $dbobj = new dbconnect\dbconnection();
-            $conn = $dbobj->connect();
-            $conn->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
+
+            $jwt = new config\jwt();
+
+            $vars = json_decode($request->getBody());
+            //echo "body".$vars;
+            if( property_exists($vars, "token") == false) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["message"=>"required jwt token is not recieved"]);
+            }
+            $tokens = json_decode($jwt->jwttokendecryption($vars->token));
+            if( $tokens->verification == "failed") {
+                $newresponse = $response->withStatus(401);
+                return $newresponse->withJson(["message"=>"you are not authorized"]);
+            }
+
             $sic = $args['sic'];
             if (preg_match("/^\d+$/",$sic) == false) {
                 $newresponse = $response->withStatus(400);
                 return $newresponse->withJson(["success"=>false, 'message'=>'sic must be a number']);
             }
+
+            if( $tokens->sic != $sic ) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["message"=>"you don't have privileges to delete other records"]);
+            }
+
+            $dbobj = new dbconnect\dbconnection();
+            $conn = $dbobj->connect();
+            $conn->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
+            
             
             $sql = "DELETE FROM student WHERE sic = $sic";
             
@@ -127,6 +190,7 @@ $app->group('/api/v1/students', function () use ($app) {
         //insert a new student record
         $app->post('', function(Request $request, Response $response)
         {
+
             $dbobj = new dbconnect\dbconnection();
             $obj = new config\duplicate();
             $conn = $dbobj->connect();
@@ -317,16 +381,53 @@ $app->group('/api/v1/students', function () use ($app) {
         //update a student record
         $app->put('', function(Request $request, Response $response) 
         { 
+
+            $jwt = new config\jwt();
+
+            $vars = json_decode($request->getBody());
+            //echo "body".$vars;
+            if( $vars->token == "") {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["message"=>"required jwt token is not recieved"]);
+            }
+            $tokens = json_decode($jwt->jwttokendecryption($vars->token));
+            if( $tokens->verification == "failed") {
+                $newresponse = $response->withStatus(401);
+                return $newresponse->withJson(["message"=>"you are not authorized"]);
+            }
+
+
             $obj = new config\duplicate(); //getting a instanse of duplicate class
             $dbobj = new dbconnect\dbconnection();
+            $jwt = new config\jwt();
+
             $conn = $dbobj->connect();
             $conn->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
             $vars = json_decode($request->getBody());
+
+            $tokens= json_decode($jwt->jwttokendecryption($vars->token));
+            if( $tokens->verification == "failed") {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["message"=>"you are not authorized"]);
+            } 
+
+            $stu_sic = $vars->sic;
+            if (preg_match("/^\d+$/",$stu_sic) == false) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["success"=>false, 'message'=>'sic must be a number']);
+            }
+
+            if( $tokens->sic != $stu_sic ) {
+                $newresponse = $response->withStatus(400);
+                return $newresponse->withJson(["message"=>"you don't have privileges to make changes to other records"]);
+            }
+
+
             $count = 0;
             foreach($vars as $key) {
                 $count++;
             }
-            if( $count != 18) {
+            if( $count != 19) {
                 $newresponse = $response->withStatus(400);
                 return $newresponse->withJson(["message"=>"request body is not appropriate"]);
             }
@@ -415,12 +516,7 @@ $app->group('/api/v1/students', function () use ($app) {
                 $newresponse = $response->withStatus(400);
                 return $newresponse->withJson(["success"=>false, "message"=>"password is not valid"]);
             } 
-            $stu_sic = $vars->sic;
-            if (preg_match("/^\d+$/",$stu_sic) == false) {
-                $newresponse = $response->withStatus(400);
-                return $newresponse->withJson(["success"=>false, 'message'=>'sic must be a number']);
-            }
-
+            
             $email = $vars->email;
             if(preg_match("/[a-zA-Z0-9]+@([a-zA-z]+)/", $email) == false) {
                 $newresponse = $response->withStatus(400);
@@ -436,7 +532,7 @@ $app->group('/api/v1/students', function () use ($app) {
                 $newresponse = $response->withStatus(400);
                 return $newresponse->withJson(["success"=>false, "message"=>"phone number must be of 10 digits"]);
             }
-            if((($obj->checkemail($phone) != -1)) and ($obj->checkphone($phone) == $stu_sic)) {
+            if(($obj->checkphone($phone) != -1) and ($obj->checkphone($phone) != $stu_sic)) {
                 $newresponse = $response->withStatus(400);
                 return $newresponse->withJson(["success"=>false, "message"=>"user with this phone number is already registered, use a different phone number"]);
             }
@@ -468,7 +564,7 @@ $app->group('/api/v1/students', function () use ($app) {
             }
             
 
-            $stmt = $conn->prepare("UPDATE student SET stu_name = :namestr, gender = :gender, father_name = :fatherName, mother_name = :motherName, dob = :dob, matric_board = :matric_board, matric_roll = :matric_roll, matric_perc = :matric_perc, password = :password, state = :state, district = :district, street_address = :street_address, phone = :phone, email = :email WHERE sic = $stu_sic");
+            $stmt = $conn->prepare("UPDATE student SET stu_name = :namestr, gender = :gender, father_name = :fatherName, mother_name = :motherName, dob = :dob, matric_board = :matric_board, matric_roll = :matric_roll, matric_perc = :matric_perc, password = :password, state = :state, district = :district, street_address = :street_address, phone = :phone, email = :email WHERE sic = :sic");
             
             $stmt->bindParam(':namestr', $namestr);
             $stmt->bindParam(':gender', $gender);
@@ -484,6 +580,7 @@ $app->group('/api/v1/students', function () use ($app) {
             $stmt->bindParam(':street_address', $streetaddress);
             $stmt->bindParam(':phone', $phone);
             $stmt->bindParam(':email', $email);
+            $stmt->bindParam(':sic',$stu_sic);
 
             if ($stmt->execute()) {
                 $hobbydel = "DELETE FROM hobby WHERE sic = $stu_sic";

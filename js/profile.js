@@ -273,8 +273,7 @@ var profile_module = (function(){
 
     var edit_data = function() {
         console.log("in func");
-        location = "updateData.php";
-        
+        location = "updateData.php";   
     };
 
 
@@ -345,27 +344,27 @@ var profile_module = (function(){
                 if( name == "hobby") {
                     
                     if(init_hobby_array) {
-                        result["\"" + "hobby" + "\""] = [];
+                        result["hobby"] = [];
                         init_hobby_array = false;
                     }
-                    result["\"" + "hobby" + "\""].push(value);             
+                    result["hobby"].push(value);             
                 }
                 else {
-                    result["\"" + name + "\""] = value;
+                    result[name] = value;
                 }
             }
             if(result.hasOwnProperty('\"gender\"') == false) {
-                result["\"" + "gender" + "\""] = "";
+                result[ "gender"] = "";
             }
             if(result.hasOwnProperty('\"hobby\"') == false) {
-                result["\"" + "hobby" + "\""] = [];
+                result["hobby"] = [];
             }
-           console.log(result);
+            datum = JSON.stringify(result);
            
             
             $.ajax({
                 method : "put",
-                data:result,
+                data:datum,
                 url: 'php/slim/profile/index.php/api/v1/students',
                 success: function (response) {
                     if( response.status == 200 ) {
