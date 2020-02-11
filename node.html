@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+    <script src="js/angular.min.js"></script>
+    <body>
+
+        <script>
+            var app = angular.module("myShoppingList", []); 
+            app.controller("myCtrl", function($scope) {
+                $scope.products = [{name:"Milk", price:10}, {name:"Bread", price:20}, {name:"Cheese", price:30}];
+            });
+        </script>
+
+        <div ng-app="myShoppingList" ng-controller="myCtrl">
+            <ul>
+                <li ng-repeat="item in products">{{item.name}} Costs {{item.price}}</li>
+            </ul>
+        </div>
+
+        <p>So far we have made an HTML list based on the items of an array.</p>
+
+    </body>
+</html>

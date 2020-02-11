@@ -11,11 +11,13 @@ class jwt
         $this->secretkey = 'secret';
     }
 
-    public function jwttokenencryption($sic) 
+    public function jwttokenencryption($sic, $status = "U") 
     {   
 
+
+
         //constructing payload
-        $payload = json_encode(array('sub' => "authenticate", 'sic' => $sic));
+        $payload = json_encode(array('status' => $status, 'sic' => $sic));
 
         //encrypting using firebase library
         $encoded = token::encode($payload, $this->secretkey, 'HS256');
@@ -44,6 +46,7 @@ class jwt
                 $obj["verification"] = "passed";
                 $data = json_decode($decoded);
                 $obj["sic"] = $data->sic;
+                $obj["status"] = $data->status;
                 return json_encode($obj);
             }        
         }
